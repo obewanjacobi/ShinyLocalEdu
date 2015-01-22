@@ -6,8 +6,13 @@ Date: 2015-01-22
 Author: HomerWhite <hwhite0@georgetowncollege.edu>
 Maintainer: HomerWhite <hwhite0@georgetowncollege.edu>
 Description: A set of wrapper-function for locally-run Shiny apps.
-Users can easily load their own data into the app for exploration:
-no hassle with uploading csv files to a remote web-app, etc.
+    Users can easily load their own data into the app for exploration:
+    no hassle with uploading csv files to a remote web-app, etc.
+Depends:
+    shiny
+Suggests:
+    knitr
 License: GPL (>=3)
 LazyLoad: yes
 LazyData: TRUE
+VignetteBuilder: knitr

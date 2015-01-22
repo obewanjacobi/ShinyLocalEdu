@@ -1,0 +1,17 @@
+---
+title: "Using the Shiny Chi-Square App"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{Using the Shiny Chi-Square App}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r include=FALSE}
+require(knitr)
+opts_chunk$set(tidy=FALSE,fig.width=4.5,fig.height=3.5)
+```
+
+TODO
