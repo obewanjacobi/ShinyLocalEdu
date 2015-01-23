@@ -21,7 +21,7 @@ formula-data input or a summary table.
 }
 \note{
 This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
-especially on the CentoOS operating system.
+especially on the CentOS operating system.
 }
 \examples{
 \dontrun{

@@ -11,7 +11,7 @@
 #' then they will be searched for in the parent environment.
 #' @return side effects
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
-#' especially on the CentoOS operating system.
+#' especially on the CentOS operating system.
 #' @import shiny
 #' @export
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
@@ -341,6 +341,16 @@ output$latestTable <- renderTable({
   }
 })
 
+output$latestExpTable <- renderTable({
+  input$resample
+  if (!is.null(latest_table)) {
+    exp <- exp.counts(latest_table)
+    rownames(exp) <- rowNames
+    colnames(exp) <- colNames
+    return(exp)
+  }
+})
+
   output$remarksLatest2 <- renderText({
     input$resample
     rounded1 <- round(obschisq,2)
@@ -442,7 +452,7 @@ output$latestTable <- renderTable({
 
 } #end server
 
-ui <- shinyUI(pageWithSidebar(
+ui <- pageWithSidebar(
 
   #  Application title
   headerPanel("Chi-Square Goodness-of-Fit Resampling"),
@@ -466,8 +476,9 @@ ui <- shinyUI(pageWithSidebar(
     conditionalPanel(
       condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
       actionButton("reset","Start Over")
-    )
-  ),
+    ),
+    width=3
+  ), #end sidebarPanel
 
 
   # Here comes the main panel
@@ -479,14 +490,20 @@ ui <- shinyUI(pageWithSidebar(
         tabsetPanel(selected="Set-Up",
                   tabPanel("Set-Up",
                     plotOutput("mosaicInitial"),
-                    h4("Observed Table"),
-                    tableOutput("obsTable"),
-                    hr(),
-                    h4("Table Expected by the Null Hypothesis"),
-                    tableOutput("expTable"),
-                    hr(),
-                    h4("Contributions to the Chi-Square Statistic"),
-                    tableOutput("contrTable"),
+                    fluidRow(
+                        column(3,
+                             h5("Observed"),
+                             tableOutput("obsTable")
+                             ),
+                        column(3,
+                             h5("Expected by Null"),
+                             tableOutput("expTable")
+                             ),
+                        column(3,offset=1,
+                             h5("Contributions"),
+                             tableOutput("contrTable")
+                             )
+                    ),
                     hr(),
                     h5(textOutput("remarksInitial"))
                   ),
@@ -502,9 +519,16 @@ ui <- shinyUI(pageWithSidebar(
       tabsetPanel(selected="Latest Simulation",
                   tabPanel("Latest Simulation",
                            plotOutput("mosaicLatest"),
-                           h4("Last Simulated Table"),
-                           tableOutput("latestTable"),
-                           hr(),
+                           fluidRow(
+                             column(4,
+                                h5("Simulated Table"),
+                                tableOutput("latestTable")
+                             ),
+                             column(4,offset=2,
+                                    h5("Expected Table"),
+                                    tableOutput("latestExpTable")
+                                    )
+                           ),
                            p(textOutput("remarksLatest1")),
                            tableOutput("summary1"),
                            p(textOutput("remarksProbBar"))),
@@ -515,18 +539,17 @@ ui <- shinyUI(pageWithSidebar(
                            p(textOutput("remarksProbDensity"))),
                   tabPanel("Probability Distribution",
                            plotOutput("chisqCurve"),
-                           hr(),
+                           br(),
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
                            p(textOutput("remarksProb"))
                   ),
                   id="MyPanel"
       )
-    )
+    ),
+    width = 9
+  )# end mainPanel
 
-
-  )
-
-))  #end ui
+) #end ui
 
 
 shiny::shinyApp(ui = ui, server = server)
