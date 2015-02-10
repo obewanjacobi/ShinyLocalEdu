@@ -74,7 +74,14 @@ ui<- shinyUI(fluidPage(
   ), # end sidebarPanel
 
   mainPanel(
+    tabsetPanel(
+      tabPanel("Plot",
     plotOutput(outputId = "main_plot", height = "300px")
+      ),
+      tabPanel("Hello",
+        HTML("hello!")
+      )
+    )
   )
 
   ) # end sidebarLayout
