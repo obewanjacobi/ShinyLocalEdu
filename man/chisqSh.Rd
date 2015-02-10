@@ -27,16 +27,16 @@ especially on the CentOS operating system.  For best views, open the app in the 
 }
 \examples{
 \dontrun{
-# trst for association, from a data frame:
+# test for association, from a data frame:
 chisqSh(~am+cyl,data=mtcars)
 
-# trst for association, from a summary table:
+# test for association, from a summary table:
 DoesNotSmoke <- c(NeitherSmokes=1168,OneSmokes=1823,BothSmoke=1380)
 Smokes <- c(188,416,400)
 ChildParents <- rbind(DoesNotSmoke,Smokes)
 chisqSh(ChildParents)
 
-# test for goodness of fit, form a data frame:
+# test for goodness of fit, from a data frame:
 chisqSh(~cyl,data=mtcars,p=rep(1/3,3))
 
 #test for goodness of fit, from a summary table:

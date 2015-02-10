@@ -18,16 +18,16 @@
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
-#' # trst for association, from a data frame:
+#' # test for association, from a data frame:
 #' chisqSh(~am+cyl,data=mtcars)
 #'
-#' # trst for association, from a summary table:
+#' # test for association, from a summary table:
 #' DoesNotSmoke <- c(NeitherSmokes=1168,OneSmokes=1823,BothSmoke=1380)
 #' Smokes <- c(188,416,400)
 #' ChildParents <- rbind(DoesNotSmoke,Smokes)
 #' chisqSh(ChildParents)
 #'
-#' # test for goodness of fit, form a data frame:
+#' # test for goodness of fit, from a data frame:
 #' chisqSh(~cyl,data=mtcars,p=rep(1/3,3))
 #'
 #' #test for goodness of fit, from a summary table:
@@ -780,10 +780,18 @@ ui1 <- shinyUI(fluidPage(
 
     conditionalPanel(
       condition="input.resample == 0 || output.totalPrev == output.total",
-      plotOutput("barGraphInitial"),
-      p(textOutput("remarksInitial")),
-      tableOutput("obsTable")
-    ),
+      tabsetPanel(selected="Setup",
+        tabPanel("Setup",
+          plotOutput("barGraphInitial"),
+          p(textOutput("remarksInitial")),
+          tableOutput("obsTable")
+        ),
+        tabPanel("App Help",
+                 HTML('<style type="text/css">body {max-width: 100%!important;}</style>'),
+                 includeHTML(system.file("doc/chisqSh.html",package="ShinyLocalEdu"))
+        )
+      ) #end tabsetPanel
+    ), #end conditionalPaenl
 
     conditionalPanel(
       condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
@@ -804,7 +812,11 @@ ui1 <- shinyUI(fluidPage(
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
                            checkboxInput("yates","Use Yates correction"),
                            p(textOutput("remarksProb"))
-                           )
+                           ),
+                  tabPanel("App Help",
+                           HTML('<style type="text/css">body {max-width: 100%!important;}</style>'),
+                           includeHTML(system.file("doc/chisqSh.html",package="ShinyLocalEdu"))
+                          )
                   ),
                   id="MyPanel"
       )
@@ -853,8 +865,10 @@ ui2 <- shinyUI(fluidPage(
 
     conditionalPanel(
       condition="input.resample == 0 || output.totalPrev == output.total",
-                    plotOutput("mosaicInitial"),
-                    fluidRow(
+        tabsetPanel(selected="Setup",
+            tabPanel("Setup",
+                  plotOutput("mosaicInitial"),
+                  fluidRow(
                         column(3,
                              h5("Observed"),
                              tableOutput("obsTable")
@@ -867,11 +881,17 @@ ui2 <- shinyUI(fluidPage(
                              h5("Contributions"),
                              tableOutput("contrTable")
                              )
-                    ),
-                    hr(),
-                    h5(textOutput("remarksInitial"))
+                  ),
+                  hr(),
+                  h5(textOutput("remarksInitial"))
+            ),
+            tabPanel("App Help",
+              HTML('<style type="text/css">body {max-width: 100%!important;}</style>'),
+              includeHTML(system.file("doc/chisqSh.html",package="ShinyLocalEdu"))
+            )
+        ) # end tabsetPanel
 
-    ),
+    ), #end conditionalPanel
 
     conditionalPanel(
       condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
@@ -902,6 +922,10 @@ ui2 <- shinyUI(fluidPage(
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
                            checkboxInput("yates","Use Yates correction"),
                            p(textOutput("remarksProb"))
+                        ),
+                  tabPanel("App Help",
+                           HTML('<style type="text/css">body {max-width: 100%!important;}</style>'),
+                           includeHTML(system.file("doc/chisqSh.html",package="ShinyLocalEdu"))
                         )
                   ),
                   id="MyPanel"
