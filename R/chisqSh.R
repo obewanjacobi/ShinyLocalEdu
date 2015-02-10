@@ -1,33 +1,41 @@
 #' @title Chi-Square Simulation (Contingency Table)
 
-#' @description Perform chi-square test for association, by simulation.  Enter either
-#' formula-data input or a summary table.
+#' @description Perform chi-square test for association or goodness of fit, by simulation.
+#' Enter either formula-data input or a summary table.
 #'
-#' @rdname chisqSimShiny
-#' @usage chisqSimShiny(x, data = parent.frame())
-#' @param x Could be a formula.  If so, it should be of the form ~var1+var2.
-#' Otherwise either a table or matrix of summary data.
-#' @param data dataframe supplying variables for formula x.  If variables in x are not found in the data,
+#' @rdname chisqSh
+#' @usage chisqSh(x, data = parent.frame(),p=NULL)
+#' @param x Could be a formula.  If so, it should be of the form ~var (for goodness of fit testing),
+#' or~var1+var2 (for association testing).  Otherwise it is either a table or matrix of summary data.
+#' @param data data frame supplying variables for formula x.  If variables in x are not found in the data,
 #' then they will be searched for in the parent environment.
+#' @param p Null probabilities in a goodness of fit test
 #' @return side effects
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
-#' especially on the CentOS operating system.
+#' especially on the CentOS operating system.  For best views, open the app in the browser.
 #' @import shiny
 #' @export
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
-#' # from a data frame:
-#' chisqSimShiny(~am+cyl,data=mtcars)
+#' # trst for association, from a data frame:
+#' chisqSh(~am+cyl,data=mtcars)
 #'
-#' # from a summary table:
+#' # trst for association, from a summary table:
 #' DoesNotSmoke <- c(NeitherSmokes=1168,OneSmokes=1823,BothSmoke=1380)
 #' Smokes <- c(188,416,400)
 #' ChildParents <- rbind(DoesNotSmoke,Smokes)
-#' chisqSimShiny(ChildParents)
+#' chisqSh(ChildParents)
+#'
+#' # test for goodness of fit, form a data frame:
+#' chisqSh(~cyl,data=mtcars,p=rep(1/3,3))
+#'
+#' #test for goodness of fit, from a summary table:
+#' obs <- c(one=8,two=18,three=11,four=7,five=9,six=7)
+#' chisqSh(obs,p=rep(1/6,6))
 #' }
-chisqSimShiny <-
-  function (x,data=parent.frame())
+chisqSh <-
+  function (x,data=parent.frame(),p=NULL)
   {
 
 ###########################################################
@@ -172,43 +180,327 @@ chisqGraph <- function(bound,region="above",df=NA,xlab="chi_square_statistic",gr
  ####
  #################################################################
 
-  #first see if we have formula-data input, or summary data
-  if (is(x,"formula")) #we have formula-data input
-    {
-    prsd <- ParseFormula(x)
-    pullout <- as.character(prsd$rhs)
+type <- NULL #will be set to the type of test (association or goodness)
 
-    if (length(pullout) != 3) {
-      stop("Formula should have the form ~ var1 + var2")
-    }
+#first see if we have formula-data input, or summary data
+if (is(x,"formula")) #we have formula-data input
+{
 
+  prsd <- ParseFormula(x)
+  pullout <- as.character(prsd$rhs)
 
-      expname <- as.character(prsd$rhs)[2]
-      respname <- as.character(prsd$rhs)[3]
+  if (length(pullout)==3) #Test for association
 
-      explanatory <- simpleFind(varName=expname,data=data)
-      response <- simpleFind(varName=respname,data=data)
-      data2 <- data.frame(explanatory,response)
-      names(data2) <- c(expname,respname)
-      tab <- table(data2)
-
-    } #end processing of formula
-
-
-  if (!is(x,"formula"))  #we have summary data
   {
-    if (length(dim(x)) !=2) #array more than two dimensions
-    {
-      stop("This function works only with two-dimensional contingency tables.")
+    type <- "association"
+
+    expname <- as.character(prsd$rhs)[2]
+    respname <- as.character(prsd$rhs)[3]
+
+    explanatory <- simpleFind(varName=expname,data=data)
+    response <- simpleFind(varName=respname,data=data)
+    data2 <- data.frame(explanatory,response)
+    names(data2) <- c(expname,respname)
+    tab <- table(data2)
+
+  } #end processing of association test
+
+  if(length(pullout)==1)  #goodness of fit
+  {
+    type <- "goodness"
+    varname <- pullout[1]
+
+
+    variable <- simpleFind(varName=varname,data=data)
+    tab <- table(variable)
+
+    #Note:  if variable has inherited levels (from a previous life) that user no longer
+    #expects to see, then length of table will exceed length of p and there will be
+    #problems.
+
+  } #end processing of goodness of fit test
+
+}#end formula processing
+
+if (!is(x,"formula"))  #we have summary data
+{
+  if (length(dim(x))>2) #array more than two dimensions
+  {
+    stop("This function does not handle tables with more than two dimensions")
+  }
+
+  tab <- as.table(x)
+  if (length(dim(tab))==1) {
+    type <- "goodness"
+  }#end of goodness of fit processing
+
+  if (length(dim(tab))==2) {
+    type <- "association"
+  }#end of association processing
+
+}#end processing for summary data
+
+# Define server logic for goodness of fit test
+server1 <- shinyServer(function(input, output) {
+  simLimit <- 10000
+
+  #Keep track of number of simulations in a given "set-up"
+  numberSims <- 0
+  chisqSims <- numeric()
+  latestSim <- NULL
+  fullSim <-character()
+
+  #we also want the ability to refresh the "set-up
+  total <- 0 #total number of sims over all set-ups including current one
+  totalPrev <- 0 #total number of sims over all set-ups excluding current one
+
+  p <- p/sum(p)
+  nullsInput <- p
+
+  obsInput <- as.integer(tab)
+
+  namesInput <- names(tab)
+
+  expectedInput <- sum(tab)*nullsInput
+
+  obschisqInput <- sum((obsInput-expectedInput)^2/expectedInput)
+
+  yatesCorrection <- sum((abs(obsInput-expectedInput)-0.5)^2/expectedInput)
+
+  simsUpdate <- reactive({
+    if (input$resample > 0) {
+      nullProbs <- nullsInput/sum(nullsInput)
+      totalCounts <- sum(obsInput)
+      expCounts <- nullProbs*totalCounts
+      reps <- min(simLimit,isolate(input$sims))
+      newSims <- rmultinom(n=reps,size=totalCounts,prob=nullProbs)
+      chisqNew <- colSums(newSims^2/expCounts)-totalCounts
+      chisqSims <<- c(chisqSims,chisqNew)
+      latestSim <<- newSims[,reps]
+      numberSims <<- numberSims + reps
+      total <<- total+reps
+
+      #now build fake list of outcomes for each trial, on the last sim
+      varLevels <- namesInput
+      namesList <- rep(varLevels,times=latestSim)
+      fullSim <<- sample(namesList,size=totalCounts,replace=FALSE)
+      list(numberSims,latestSim)
+    }
+  })
+
+
+  #this erases the simulation history and puts user back to initial graph
+  simsReset <- reactive({
+    input$reset
+    totalPrev <<- totalPrev + numberSims
+    numberSims <<- 0
+    chisqSims <<- numeric()
+    latestSim <<- NULL
+    return(totalPrev)
+  })
+
+
+  dfInput <- length(obsInput)-1
+
+
+  xmaxInput <- qchisq(0.999,df=dfInput)
+
+
+  #help with conditonal panals
+  output$totalPrev <- reactive({
+    simsReset()
+  })
+
+  # needed for the conditional panels to work
+  outputOptions(output, 'totalPrev', suspendWhenHidden=FALSE)
+
+  output$total <- reactive({
+    simsUpdate() #for dependency
+    total
+  })
+
+  # needed for the conditional panels to work
+  outputOptions(output, 'total', suspendWhenHidden=FALSE)
+
+  chisqDensities <- reactive({
+    input$resample
+    if (length(chisqSims)==1) band <- 1 else band <- "nrd0"
+    density(chisqSims,n=500,from=0,to=xmaxInput,bw=band)
+  })
+
+  output$barGraphInitial <- renderPlot({
+
+    observed <- obsInput
+    nulls <- nullsInput/sum(nullsInput)
+    names <- namesInput
+
+    observed <- obsInput
+    expected <- nulls*sum(observed)
+    tab <- rbind(observed,expected)
+    rownames(tab) <-c("Observed","Expected")
+    colnames(tab) <- names
+    barplot(tab,beside=T,col=c("#ee7700","grey"),
+            main="Bargraph of Observed and Expected Counts",xlab="",ylab="Counts",
+            legend.text=TRUE)
+  })
+
+  output$remarksInitial <- renderText({
+
+    observed <- obsInput
+    nulls <- nullsInput/sum(nullsInput)
+    names <- namesInput
+
+    chisq <- obschisqInput
+    rounded1 <- round(chisq,2)
+    paste("Observed chi-square statistic =  ",as.character(rounded1),sep="")
+  })
+
+  output$obsTable <- renderTable({
+
+    observed <- obsInput
+    nulls <- nullsInput/sum(nullsInput)
+    names <- namesInput
+
+    expected <- nulls*sum(observed)
+    contribs <- (observed-expected)^2/expected
+    df <- data.frame(Levels=names,
+                     Observed=observed,
+                     Expected=round(expected,2),
+                     cont=round(contribs,2)
+    )
+    names(df)[4] <- c("Contribution to Chi-Square")
+    df
+  })
+
+  output$remarksLatest1 <- renderText({
+    input$resample
+    chisq <- obschisqInput
+    rounded1 <- round(chisq,2)
+    rounded2 <- round(chisqSims[length(chisqSims)],2)
+    paste("Observed chi-square statistic =  ",as.character(rounded1),
+          ", Latest resampled chi-square = ",as.character(rounded2),sep="")
+  })
+
+  output$remarksLatest2 <- renderText({
+    input$resample
+    chisq <- obschisqInput
+    rounded1 <- round(chisq,2)
+    rounded2 <- round(chisqSims[length(chisqSims)],2)
+    paste("Observed chi-square statistic =  ",as.character(rounded1),
+          ", Latest resampled chi-square = ",as.character(rounded2),sep="")
+  })
+
+
+  output$barGraphLatest <- renderPlot({
+    input$resample
+    if (length(chisqSims) > 0) {
+      totalCounts <- sum(obsInput)
+      nulls <- nullsInput/sum(nullsInput)
+      expected <- totalCounts*nulls
+      tab <- rbind(obsInput,expected,latestSim)
+      rownames(tab) <-c("Observed","Expected","Resampled")
+      colnames(tab) <- isolate(namesInput)
+      barplot(tab,beside=T,col=c("#ee7700","grey","#3333ff"),
+              main="Bargraph of Observed, Expected, and Latest Resample",xlab="",
+              ylab="Counts",
+              legend.text=TRUE)
     }
 
-    tab <- as.table(x)
+  })
 
-  }#end processing for summary data
+  output$densityplot <-
+    renderPlot({
+      input$resample
+      if (length(chisqSims)==1) band <- 1 else band <- "nrd0"
+      dchisq <- density(chisqSims,n=500,from=0,to=xmaxInput,bw=band)
+      plot(dchisq$x,dchisq$y,type="l",col="blue",
+           xlab="Chi-Square Value",ylab="Estimated Density",
+           main="Distribution of Resampled Chi-Square Statistics")
+      if (length(chisqSims) <= 100) rug(chisqSims)
+      latest <- chisqSims[length(chisqSims)]
+      points(latest,0,col="blue",pch=19)
+      abline(v=obschisqInput)
+
+    })
+
+  output$summary1 <- renderTable({
+    input$resample
+    obs <- obschisqInput
+    if (length(chisqSims) >0) {
+      n <- length(chisqSims)
+      latest <- chisqSims[n]
+      p.value <- length(chisqSims[chisqSims>=obs])/n
+      percentage <- paste(as.character(round(p.value*100,2)),"%",sep="")
+      df <- data.frame(round(latest,2),n,percentage)
+      names(df) <- c("Last Resampled Chi-Square",
+                     "Number of Resamples So Far",
+                     paste("Percent Above ",round(obs,2),sep="")
+      )
+      df
+    }
+  })
+
+  output$remarksProbBar <- renderText({
+    obs <- obschisqInput
+    paste0("The percentage in the table gives the approximate probability, based on our resamples so far, of getting a chi-square statistic of ",
+           round(obs,2)," or more, if the probability of each outcome is as the Null probabilities state.",
+           "  The more resamples you take the better this approximations will be!")
+  })
 
 
-# Define server logic for SlowGoodness
-server <- function(input, output) {
+  output$summary2 <- renderTable({
+    input$resample
+    obs <- obschisqInput
+    n <- length(chisqSims)
+    latest <- chisqSims[n]
+    p.value <- length(chisqSims[chisqSims>=obs])/n
+    percentage <- paste(as.character(round(p.value*100,2)),"%",sep="")
+    df <- data.frame(round(latest,2),n,percentage)
+    names(df) <- c("Last Resampled Chi-Square",
+                   "Number of Resamples So Far",
+                   paste("Percent Above ",round(obs,2),sep="")
+    )
+    df
+  })
+
+  output$remarksProbDensity <- renderText({
+    obs <- obschisqInput
+    paste0("The curve above approximates the true probability distribution of the chi-square statistic.",
+           " It is based on our resamples so far.  The percentage in the table gives the approximate probability, based on our resamples so far, of getting a chi-square statistic of ",
+           round(obs,2)," or more, if the probability of each outcome is as the Null probabilities state.",
+           "  The more resamples you take the better these approximations will be!")
+  })
+
+
+  output$chisqCurve <- renderPlot({
+    obs <- obschisqInput
+    degFreedom <- dfInput
+    if (input$yates) {
+      chisqGraph(bound=yatesCorrection,region="above",df=degFreedom,xlab="Chi-Square Values",
+                 graph=TRUE)
+      abline(v=yatesCorrection)
+    } else {
+      chisqGraph(bound=obs,region="above",df=degFreedom,xlab="Chi-Square Values",
+               graph=TRUE)
+      abline(v=obs)
+    }
+    if (input$compareDen) {
+      lines(chisqDensities(),col="blue",lwd=4)
+    }
+  })
+
+  output$remarksProb <- renderText({
+    obs <- obschisqInput
+    paste0("The curve above approximates the true probability distribution of the chi-square statistic.",
+           " The shaded area gives the approximate probability of getting a chi-square statistic of ",
+           round(obs,2)," or more, if the probability of each outcome is as the Null probabilities state.")
+  })
+
+})
+
+
+# Define server logic for association test
+server2 <- function(input, output) {
 
   simLimit <- 10000 # no more than this many sims at one time
 
@@ -230,6 +522,9 @@ server <- function(input, output) {
   expected <- exp.counts(tab)
 
   obschisq <- chisq.calc(observed)
+
+  yatesCorrection <- sum((abs(observed-expected)-0.5)^2/expected)
+
 
   simsUpdate <- reactive({
     if (input$resample > 0) {
@@ -434,9 +729,15 @@ output$latestExpTable <- renderTable({
   output$chisqCurve <- renderPlot({
     obs <- obschisq
     degFreedom <- df
-    chisqGraph(bound=obs,region="above",df=degFreedom,xlab="Chi-Square Values",
-               graph=TRUE)
-    abline(v=obs)
+    if (input$yates) {
+      chisqGraph(bound=yatesCorrection,region="above",df=degFreedom,xlab="Chi-Square Values",
+                 graph=TRUE)
+      abline(v=yatesCorrection)
+    } else {
+      chisqGraph(bound=obs,region="above",df=degFreedom,xlab="Chi-Square Values",
+                 graph=TRUE)
+      abline(v=obs)
+    }
     if (input$compareDen) {
       lines(chisqDensities(),col="blue",lwd=4)
     }
@@ -452,7 +753,95 @@ output$latestExpTable <- renderTable({
 
 } #end server
 
-ui <- pageWithSidebar(
+
+# Define ui for goodness of fit test
+ui1 <- shinyUI(pageWithSidebar(
+
+  #  Application title
+  headerPanel("Chi-Square Goodness-of-Fit Resampling"),
+
+  # Sidebar
+  sidebarPanel(
+#     conditionalPanel(
+#       condition="input.resample == 0 || output.totalPrev == output.total",
+#       textInput("nulls","Enter Null Probabilities (separated by commas)",
+#                 "0.17,0.17,0.17,0.17,0.17,0.17"),
+#
+#       helpText("Enter the probabilities as decimal numbers.",
+#                "If they do not sum to 1, then the",
+#                "application will re-scale them for you."),
+#       br(),
+#
+#       textInput("obs","Enter Observed Counts (separated by commas)",
+#                 "8,18,11,7,9,7"),
+#       br(),
+#
+#       textInput("names","Enter Level Names (separated by commas)",
+#                 "One,Two,Three,Four,Five,Six"),
+#       br()
+#     ),
+    helpText("One simulation means the machine will produce one table of",
+             "counts, using the Null probabilities.  How many simulations do",
+             "you want the machine to perform at once?  (Limit is 10000.)"),
+    numericInput("sims","Number of Simulations at Once",1,min=0,step=1),
+    br(),
+    actionButton("resample","Simulate Now"),
+    conditionalPanel(
+      condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
+      actionButton("reset","Start Over")
+    )
+  ),
+
+
+  # Here comes the main panel
+
+  # Here comes the main panel
+
+  mainPanel(
+
+    conditionalPanel(
+      condition="input.resample == 0 || output.totalPrev == output.total",
+      plotOutput("barGraphInitial"),
+      p(textOutput("remarksInitial")),
+      tableOutput("obsTable")
+    ),
+
+    conditionalPanel(
+      condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
+      tabsetPanel(selected="Latest Simulation",
+                  tabPanel("Latest Simulation",
+                           plotOutput("barGraphLatest"),
+                           p(textOutput("remarksLatest1")),
+                           tableOutput("summary1"),
+                           p(textOutput("remarksProbBar"))),
+                  tabPanel("Density Plot of Simulations",
+                           plotOutput("densityplot"),
+                           p(textOutput("remarksLatest2")),
+                           tableOutput("summary2"),
+                           p(textOutput("remarksProbDensity"))),
+                  tabPanel("Probability Distribution",
+                           plotOutput("chisqCurve"),
+                           br(),
+                           checkboxInput("compareDen","Compare with simulated chi-square distribution"),
+                           checkboxInput("yates","Use Yates correction"),
+                           p(textOutput("remarksProb"))
+                           ),
+                  tabPanel("App Help",
+                           suppressWarnings(includeHTML(system.file("doc/chisqSimShiny.html",
+                                                                    package="ShinyLocalEdu")))
+                  ),
+                  id="MyPanel"
+      )
+    )
+
+
+  )
+
+))  #end ui1
+
+
+# Define ui for association test
+ui2 <- pageWithSidebar(
 
   #  Application title
   headerPanel("Chi-Square Goodness-of-Fit Resampling"),
@@ -508,8 +897,8 @@ ui <- pageWithSidebar(
                     h5(textOutput("remarksInitial"))
                   ),
                  tabPanel("App Help",
-                    includeHTML(system.file("doc/chisqSimShiny.html",
-                                        package="ShinyLocalEdu"))
+                    suppressWarnings(includeHTML(system.file("doc/chisqSimShiny.html",
+                                        package="ShinyLocalEdu")))
                   )
         ) # end tabset panel
     ),
@@ -541,6 +930,7 @@ ui <- pageWithSidebar(
                            plotOutput("chisqCurve"),
                            br(),
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
+                           checkboxInput("yates","Use Yates correction"),
                            p(textOutput("remarksProb"))
                   ),
                   id="MyPanel"
@@ -549,8 +939,17 @@ ui <- pageWithSidebar(
     width = 9
   )# end mainPanel
 
-) #end ui
+) #end ui2
 
+
+#choose ui and server based on type of test:
+if (type=="goodness") {
+  server <- server1
+  ui <- ui1
+} else {
+  server <- server2
+  ui <- ui2
+}
 
 shiny::shinyApp(ui = ui, server = server)
 
