@@ -951,7 +951,8 @@ if (type=="goodness") {
   ui <- ui2
 }
 
-shiny::shinyApp(ui = ui, server = server)
+shiny::shinyApp(ui = ui, server = server,
+                options=list(height=600,width=1200))
 
 
   }#end chisqSimShiny
