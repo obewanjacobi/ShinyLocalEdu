@@ -953,6 +953,7 @@ if (type=="goodness") {
 
 shiny::shinyApp(ui = ui, server = server,
                 options=list(height=600,width=1200))
+# as expected, setting options does not help increase screen width when package is attached
 
 
   }#end chisqSimShiny
