@@ -44,7 +44,12 @@ server <- shinyServer(function(input, output) {
 
 
 # Define ui for test
-ui<- shinyUI(bootstrapPage(
+ui<- shinyUI(fluidPage(
+
+  titlePanel("Test"),
+
+  sidebarLayout(
+    sidebarPanel(
 
     selectInput(inputId = "n_breaks",
                 label = "Number of bins in histogram (approximate):",
@@ -59,8 +64,6 @@ ui<- shinyUI(bootstrapPage(
                   label = strong("Show density estimate"),
                   value = FALSE),
 
-    plotOutput(outputId = "main_plot", height = "300px"),
-
     # Display this only if the density is shown
     conditionalPanel(condition = "input.density == true",
                      sliderInput(inputId = "bw_adjust",
@@ -68,7 +71,15 @@ ui<- shinyUI(bootstrapPage(
                                  min = 0.2, max = 2, value = 1, step = 0.2)
     )
 
-  ))
+  ), # end sidebarPanel
+
+  mainPanel(
+    plotOutput(outputId = "main_plot", height = "300px")
+  )
+
+  ) # end sidebarLayout
+
+)) #end fluidPage and shinyUI
 
 
 shiny::shinyApp(ui = ui, server = server,
