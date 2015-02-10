@@ -755,48 +755,27 @@ output$latestExpTable <- renderTable({
 
 
 # Define ui for goodness of fit test
-ui1 <- shinyUI(pageWithSidebar(
+ui1 <- shinyUI(fluidPage(
 
   #  Application title
-  headerPanel("Chi-Square Goodness-of-Fit Resampling"),
+  titlePanel("Chi-Square Goodness-of-Fit Resampling"),
 
   # Sidebar
-  sidebarPanel(
-#     conditionalPanel(
-#       condition="input.resample == 0 || output.totalPrev == output.total",
-#       textInput("nulls","Enter Null Probabilities (separated by commas)",
-#                 "0.17,0.17,0.17,0.17,0.17,0.17"),
-#
-#       helpText("Enter the probabilities as decimal numbers.",
-#                "If they do not sum to 1, then the",
-#                "application will re-scale them for you."),
-#       br(),
-#
-#       textInput("obs","Enter Observed Counts (separated by commas)",
-#                 "8,18,11,7,9,7"),
-#       br(),
-#
-#       textInput("names","Enter Level Names (separated by commas)",
-#                 "One,Two,Three,Four,Five,Six"),
-#       br()
-#     ),
-    helpText("One simulation means the machine will produce one table of",
+  sidebarLayout(
+    sidebarPanel(
+      helpText("One simulation means the machine will produce one table of",
              "counts, using the Null probabilities.  How many simulations do",
              "you want the machine to perform at once?  (Limit is 10000.)"),
-    numericInput("sims","Number of Simulations at Once",1,min=0,step=1),
-    br(),
-    actionButton("resample","Simulate Now"),
-    conditionalPanel(
-      condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
-      actionButton("reset","Start Over")
-    )
-  ),
-
-
-  # Here comes the main panel
+      numericInput("sims","Number of Simulations at Once",1,min=0,step=1),
+      br(),
+      actionButton("resample","Simulate Now"),
+      conditionalPanel(
+        condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
+        actionButton("reset","Start Over")
+      )
+    ), #end sidebarPanel
 
   # Here comes the main panel
-
   mainPanel(
 
     conditionalPanel(
@@ -835,18 +814,21 @@ ui1 <- shinyUI(pageWithSidebar(
     )
 
 
-  )
+  ) #end mainPanel
 
-))  #end ui1
+  ) #nd SidebarLayout
+
+))  #end fluidPage and and shinyUI
 
 
 # Define ui for association test
-ui2 <- pageWithSidebar(
+ui2 <- shinyUI(fluidPage(
 
   #  Application title
-  headerPanel("Chi-Square Goodness-of-Fit Resampling"),
+  titlePanel("Chi-Square Test for Association: Resampling"),
 
   # Sidebar
+  sidebarLayout(
   sidebarPanel(
     conditionalPanel(
       condition="input.resample == 0 || output.totalPrev == output.total",
@@ -871,7 +853,6 @@ ui2 <- pageWithSidebar(
 
 
   # Here comes the main panel
-
   mainPanel(
 
     conditionalPanel(
@@ -901,6 +882,7 @@ ui2 <- pageWithSidebar(
                                         package="ShinyLocalEdu")))
                   )
         ) # end tabset panel
+
     ),
 
     conditionalPanel(
@@ -939,7 +921,9 @@ ui2 <- pageWithSidebar(
     width = 9
   )# end mainPanel
 
-) #end ui2
+  ) # end sidebarLayout
+
+)) # end fluidPage and shinyUI
 
 
 #choose ui and server based on type of test:
