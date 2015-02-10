@@ -593,10 +593,10 @@ server2 <- function(input, output) {
 
   output$mosaicInitial <- renderPlot({
     par(mfrow=c(1,2))
-    mosaicplot(t(observed),col="orange",main="Observed Table")
+    mosaicplot(t(observed),col="orange",main="Observed Table",cex.axis=1.3)
     expected <- exp.counts(observed)
     rownames(expected) <- rowNames
-    mosaicplot(t(expected),col="grey",main="Expected Table")
+    mosaicplot(t(expected),col="grey",main="Expected Table",cex.axis=1.3)
     par(mfrow=c(1,1))
   })
 
@@ -618,10 +618,10 @@ server2 <- function(input, output) {
       rownames(latest_table) <- rowNames
       colnames(latest_table) <- colNames
       latest_table <- as.matrix(latest_table)
-      mosaicplot(t(latest_table),col="blue",main="Simulated Table")
+      mosaicplot(t(latest_table),col="blue",main="Simulated Table",cex.axis=1.3)
       expected <- exp.counts(latest_table)
       rownames(expected) <- rowNames
-      mosaicplot(t(expected),col="grey",main="Expected Table\n(from simulation)")
+      mosaicplot(t(expected),col="grey",main="Expected Table\n(from simulation)",cex.axis=1.3)
       par(mfrow=c(1,1))
     }
   })
@@ -804,14 +804,10 @@ ui1 <- shinyUI(fluidPage(
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
                            checkboxInput("yates","Use Yates correction"),
                            p(textOutput("remarksProb"))
-                           ),
-                  tabPanel("App Help",
-                           suppressWarnings(includeHTML(system.file("doc/chisqSimShiny.html",
-                                                                    package="ShinyLocalEdu")))
+                           )
                   ),
                   id="MyPanel"
       )
-    )
 
 
   ) #end mainPanel
@@ -857,8 +853,6 @@ ui2 <- shinyUI(fluidPage(
 
     conditionalPanel(
       condition="input.resample == 0 || output.totalPrev == output.total",
-        tabsetPanel(selected="Set-Up",
-                  tabPanel("Set-Up",
                     plotOutput("mosaicInitial"),
                     fluidRow(
                         column(3,
@@ -876,12 +870,6 @@ ui2 <- shinyUI(fluidPage(
                     ),
                     hr(),
                     h5(textOutput("remarksInitial"))
-                  ),
-                 tabPanel("App Help",
-                    suppressWarnings(includeHTML(system.file("doc/chisqSimShiny.html",
-                                        package="ShinyLocalEdu")))
-                  )
-        ) # end tabset panel
 
     ),
 
@@ -914,11 +902,12 @@ ui2 <- shinyUI(fluidPage(
                            checkboxInput("compareDen","Compare with simulated chi-square distribution"),
                            checkboxInput("yates","Use Yates correction"),
                            p(textOutput("remarksProb"))
+                        )
                   ),
                   id="MyPanel"
-      )
-    ),
+      ),
     width = 9
+
   )# end mainPanel
 
   ) # end sidebarLayout
