@@ -14,6 +14,7 @@
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
 #' especially on the CentOS operating system.  For best views, open the app in the browser.
 #' @import shiny
+#' @import shinythemes
 #' @export
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
@@ -757,7 +758,7 @@ output$latestExpTable <- renderTable({
 
 
 # Define ui for goodness of fit test
-ui1 <- shinyUI(fluidPage(
+ui1 <- shinyUI(fluidPage(shinythemes::shinytheme("cerulean"),
 
   #  Application title
   titlePanel("Chi-Square Goodness-of-Fit Resampling"),
