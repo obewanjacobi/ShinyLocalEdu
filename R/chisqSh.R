@@ -241,7 +241,7 @@ if (!is(x,"formula"))  #we have summary data
 }#end processing for summary data
 
 # Define server logic for goodness of fit test
-server1 <- shinyServer(function(input, output) {
+server1 <- shinyServer(function(input, output,session) {
   simLimit <- 10000
 
   #Keep track of number of simulations in a given "set-up"
@@ -284,6 +284,7 @@ server1 <- shinyServer(function(input, output) {
       varLevels <- namesInput
       namesList <- rep(varLevels,times=latestSim)
       fullSim <<- sample(namesList,size=totalCounts,replace=FALSE)
+      if (total - totalPrev == 1) updateTabsetPanel(session,"simsTabset",selected="Latest Simulation")
       list(numberSims,latestSim)
     }
   })
@@ -500,7 +501,7 @@ server1 <- shinyServer(function(input, output) {
 
 
 # Define server logic for association test
-server2 <- function(input, output) {
+server2 <- function(input, output,session) {
 
   simLimit <- 10000 # no more than this many sims at one time
 
@@ -539,6 +540,7 @@ server2 <- function(input, output) {
       latestSim <<- newSims[reps]
       numberSims <<- numberSims + reps
       total <<- total+reps
+      if (total - totalPrev == 1) updateTabsetPanel(session,"simsTabset",selected="Latest Simulation")
       list(numberSims,latestSim)
     }
   })
@@ -795,13 +797,13 @@ ui1 <- shinyUI(fluidPage(
 
     conditionalPanel(
       condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
-      tabsetPanel(selected="Latest Simulation",
+      tabsetPanel(id="simsTabset",selected="Latest Simulation",
                   tabPanel("Latest Simulation",
                            plotOutput("barGraphLatest"),
                            p(textOutput("remarksLatest1")),
                            tableOutput("summary1"),
                            p(textOutput("remarksProbBar"))),
-                  tabPanel("Density Plot of Simulations",
+                  tabPanel(HTML("Density Plot<br>of Simulations"),
                            plotOutput("densityplot"),
                            p(textOutput("remarksLatest2")),
                            tableOutput("summary2"),
@@ -809,8 +811,11 @@ ui1 <- shinyUI(fluidPage(
                   tabPanel("Probability Distribution",
                            plotOutput("chisqCurve"),
                            br(),
-                           checkboxInput("compareDen","Compare with simulated chi-square distribution"),
-                           checkboxInput("yates","Use Yates correction"),
+                           splitLayout(
+                            checkboxInput("compareDen",
+                                          HTML("Compare with simulated <br>chi-square distribution")),
+                            checkboxInput("yates","Use Yates correction")
+                            ),
                            p(textOutput("remarksProb"))
                            ),
                   tabPanel("App Help",
@@ -895,7 +900,7 @@ ui2 <- shinyUI(fluidPage(
 
     conditionalPanel(
       condition="(input.resample > 0 && input.reset == 0) || output.total > output.totalPrev",
-      tabsetPanel(selected="Latest Simulation",
+      tabsetPanel(id="simsTabset",selected="Latest Simulation",
                   tabPanel("Latest Simulation",
                            plotOutput("mosaicLatest"),
                            fluidRow(
@@ -911,7 +916,7 @@ ui2 <- shinyUI(fluidPage(
                            p(textOutput("remarksLatest1")),
                            tableOutput("summary1"),
                            p(textOutput("remarksProbBar"))),
-                  tabPanel("Density Plot of Simulations",
+                  tabPanel(HTML("Density Plot<br>of Simulations"),
                            plotOutput("densityplot"),
                            p(textOutput("remarksLatest2")),
                            tableOutput("summary2"),
@@ -919,8 +924,11 @@ ui2 <- shinyUI(fluidPage(
                   tabPanel("Probability Distribution",
                            plotOutput("chisqCurve"),
                            br(),
-                           checkboxInput("compareDen","Compare with simulated chi-square distribution"),
-                           checkboxInput("yates","Use Yates correction"),
+                           splitLayout(
+                            checkboxInput("compareDen",
+                                          HTML("Compare with simulated <br>chi-square distribution")),
+                            checkboxInput("yates","Use Yates correction")
+                            ),
                            p(textOutput("remarksProb"))
                         ),
                   tabPanel("App Help",
@@ -948,8 +956,7 @@ if (type=="goodness") {
   ui <- ui2
 }
 
-shiny::shinyApp(ui = ui, server = server,
-                options=list(height=600,width=1200))
+shiny::shinyApp(ui = ui, server = server)
 # as expected, setting options does not help increase screen width when package is attached
 
 
