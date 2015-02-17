@@ -5,7 +5,7 @@ Version: 0.1
 Date: 2015-01-22
 Author: HomerWhite <hwhite0@georgetowncollege.edu>
 Maintainer: HomerWhite <hwhite0@georgetowncollege.edu>
-Description: A set of wrapper-function for locally-run Shiny apps.
+Description: A set of wrapper-functions for locally-run Shiny apps.
     Users can easily load their own data into the app for exploration:
     no hassle with uploading csv files to a remote web-app, etc.
 Depends:
