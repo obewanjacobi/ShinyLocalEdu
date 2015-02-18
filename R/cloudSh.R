@@ -3,7 +3,7 @@
 #' @description Uses the \code{cloud} function from the \code{lattice} package.
 #'
 #' @rdname cloudSh
-#' @usage cloudSh(x, data = parent.frame(),adjust.anim=1...)
+#' @usage cloudSh(x, data = parent.frame(),adjust.anim=1,options=NULL,...)
 #' @param x Could be a formula.  If so, it should be of the form z~x*y|g1*g2, as in the
 #' \code{lattice} function \code{cloud}.
 #' @param data data frame supplying variables for formula x.  If variables in x are not found in the data,
@@ -13,6 +13,7 @@
 #' reasonable time interval between successive plots when animation is requested.
 #' The interval actually
 #' used is the intially-determined interval multiplied by this argument.
+#' @param options Options that will be passed to \code{shiny::runApp}.
 #' @param ... Other arguments passed to \code{cloud}.
 #' @return side effects
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
@@ -27,11 +28,12 @@
 #'      group=Species,auto.key=TRUE)
 #' }
 cloudSh <-
-  function (x,data=parent.frame(),adjust.anim=1,...)
+  function (x,data=parent.frame(),adjust.anim=1,options=NULL,...)
   {
 
   argList <- as.list(match.call(expand.dots = TRUE)[-1])
   argList$adjust.anim <- NULL
+  argList$options <- NULL
 
   plotTime <- system.time(do.call(cloud,argList))[3]
   interval <- 10^5*plotTime*adjust.anim
@@ -193,7 +195,7 @@ ui2 <- shinyUI(fluidPage(
 
 ))  #end fluidPage and and shinyUI
 
-shiny::shinyApp(ui = ui2, server = server2)
+shiny::shinyApp(ui = ui2, server = server2,options=options)
 
 
   }#end cloudSh

@@ -3,7 +3,7 @@
 \alias{cloudSh}
 \title{3-D Scatter Plots}
 \usage{
-cloudSh(x, data = parent.frame(),adjust.anim=1...)
+cloudSh(x, data = parent.frame(),adjust.anim=1,options=NULL,...)
 }
 \arguments{
 \item{x}{Could be a formula.  If so, it should be of the form z~x*y|g1*g2, as in the
@@ -17,6 +17,8 @@ elapsed time to plot the cloud, then attempts to determine a
 reasonable time interval between successive plots when animation is requested.
 The interval actually
 used is the intially-determined interval multiplied by this argument.}
+
+\item{options}{Options that will be passed to \code{shiny::runApp}.}
 
 \item{...}{Other arguments passed to \code{cloud}.}
 }
