@@ -19,7 +19,7 @@
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
-#' cloudSh(Sepal.Length~Petal.Length*Petal.Width,data=iris)
+#' cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,group=Species)
 #' }
 cloudSh <-
   function (x,data=parent.frame(),group=NULL)
