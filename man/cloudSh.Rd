@@ -26,7 +26,8 @@ especially on the CentOS operating system.  For best views, open the app in the 
 }
 \examples{
 \dontrun{
-cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,group=Species)
+cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
+     group=Species,auto.key=TRUE)
 }
 }
 \author{

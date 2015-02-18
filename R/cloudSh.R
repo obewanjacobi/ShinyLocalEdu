@@ -14,12 +14,12 @@
 #' especially on the CentOS operating system.  For best views, open the app in the browser.
 #' @import shiny
 #' @importFrom lattice cloud
-#' @import shinythemes
 #' @export
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
-#' cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,group=Species)
+#' cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
+#'      group=Species,auto.key=TRUE)
 #' }
 cloudSh <-
   function (x,data=parent.frame(),...)
@@ -120,7 +120,7 @@ server2 <- shinyServer(function(input, output,session) {
 
 
 # Define ui for cloudSh app
-ui1 <- shinyUI(fluidPage(shinythemes::shinytheme("cerulean"),
+ui1 <- shinyUI(fluidPage(
 
   #  Application title
   titlePanel("3-D Scatter Plot"),
@@ -146,30 +146,40 @@ ui1 <- shinyUI(fluidPage(shinythemes::shinytheme("cerulean"),
 
 ))  #end fluidPage and and shinyUI
 
-ui2 <- shinyUI(fluidPage(shinythemes::shinytheme("cerulean"),
+ui2 <- shinyUI(fluidPage(
 
                         #  Application title
                         title="3-D Scatter Plot",
                         titlePanel("3-D Scatter Plot"),
 
-
-                        plotOutput("cloudplot"),
-                        hr(),
-
                         fluidRow(
-                          column(3,uiOutput("zControl")),
-                          column(3,offset=1,uiOutput("xControl")),
-                          column(3,offset=1,uiOutput("yControl"))
-                        ),
-
-                        fluidRow(
-                          column(3,offset=5,
+                          column(3,
+                                 helpText("Use these sliders to rotate the plot."),
+                                 uiOutput("zControl"),
+                                 uiOutput("xControl"),
+                                 uiOutput("yControl"),
+                                 hr(),
+                                 helpText("Press a Play button to animate the rotation.",
+                                          "For best results, animate only",
+                                          "one direction at a time."),
+                                 hr(),
                                  selectInput("speed","Animation Speed",
                                              c("Slow"="slow",
-                                                "Medium"="medium",
+                                               "Medium"="medium",
                                                "Fast"="fast"))
-                          )
+                          ),
+                          column(9,
+                                 plotOutput("cloudplot",width="700px",height="700px")
+                                 )
                         )
+
+#                         hr(),
+#
+#                         fluidRow(
+#                           column(3,uiOutput("zControl")),
+#                           column(3,offset=1,uiOutput("xControl")),
+#                           column(3,offset=1,uiOutput("yControl"))
+#                         )
 
 ))  #end fluidPage and and shinyUI
 
