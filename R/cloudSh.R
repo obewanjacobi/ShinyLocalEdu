@@ -3,11 +3,16 @@
 #' @description Uses the \code{cloud} function from the \code{lattice} package.
 #'
 #' @rdname cloudSh
-#' @usage cloudSh(x, data = parent.frame(),...)
+#' @usage cloudSh(x, data = parent.frame(),adjust.anim=1...)
 #' @param x Could be a formula.  If so, it should be of the form z~x*y|g1*g2, as in the
 #' \code{lattice} function \code{cloud}.
 #' @param data data frame supplying variables for formula x.  If variables in x are not found in the data,
 #' then they will be searched for in the parent environment.
+#' @param adjust.anim Use this to adjust animation speed for oprtimum viewing.  The app measures
+#' elapsed time to plot the cloud, then attempts to determine a
+#' reasonable time interval between successive plots when animation is requested.
+#' The interval actually
+#' used is the intially-determined interval multiplied by this argument.
 #' @param ... Other arguments passed to \code{cloud}.
 #' @return side effects
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
@@ -22,12 +27,14 @@
 #'      group=Species,auto.key=TRUE)
 #' }
 cloudSh <-
-  function (x,data=parent.frame(),...)
+  function (x,data=parent.frame(),adjust.anim=1,...)
   {
 
   argList <- as.list(match.call(expand.dots = TRUE)[-1])
+  argList$adjust.anim <- NULL
 
-  haveGroup <- (length(as.character(substitute(group)))>0)
+  plotTime <- system.time(do.call(cloud,argList))[3]
+  interval <- 10^5*plotTime*adjust.anim
 
 # Define server logic for cloudSh app
   server1 <- shinyServer(function(input, output,session) {
@@ -73,34 +80,38 @@ cloudSh <-
 
   })
 server2 <- shinyServer(function(input, output,session) {
-  #This option permits three different step sizes.  Properly responsive.
+# This option permits three different step sizes.  Properly responsive.
+#   step <- reactive({
+#     switch(input$speed,
+#       "slow"=1,
+#       "medium"=10,
+#       "fast"=30
+#     )
+#   })
 
+  # This option allows works from the lsider.  I like it better.
   step <- reactive({
-    switch(input$speed,
-      "slow"=1,
-      "medium"=10,
-      "fast"=30
-    )
+    input$speed
   })
 
   output$zControl <- renderUI({
     step <- step()
     sliderInput("zScreen","z",0,360,value=0,step=step,
-                animate=animationOptions(interval=200,loop=TRUE))
+                animate=animationOptions(interval=interval,loop=TRUE))
 
   })
 
   output$xControl <- renderUI({
     step <- step()
     sliderInput("xScreen","x",0,360,value=90,step=step,
-                animate=animationOptions(interval=200,loop=TRUE))
+                animate=animationOptions(interval=interval,loop=TRUE))
 
   })
 
   output$yControl <- renderUI({
     step <- step()
     sliderInput("yScreen","y",0,360,value=40,step=step,
-                animate=animationOptions(interval=200,loop=TRUE))
+                animate=animationOptions(interval=interval,loop=TRUE))
 
   })
 
@@ -109,9 +120,6 @@ server2 <- shinyServer(function(input, output,session) {
       allArgs <- c(list(screen=list(x=-input$xScreen,y=input$yScreen,z=input$zScreen)),
                    argList)
       do.call(cloud,allArgs)
-#       cloud(eval(ll$x),data=eval(ll$data),group=eval(ll$group),
-#             screen=list(x=-input$xScreen,y=input$yScreen,z=input$zScreen),
-#             auto.key=haveGroup,pch=19)
     }
   })
 
@@ -163,10 +171,12 @@ ui2 <- shinyUI(fluidPage(
                                           "For best results, animate only",
                                           "one direction at a time."),
                                  hr(),
-                                 selectInput("speed","Animation Speed",
-                                             c("Slow"="slow",
-                                               "Medium"="medium",
-                                               "Fast"="fast"))
+                                 sliderInput("speed","Animation Speed (degrees/step)",
+                                             0,90,value=1)
+#                                  selectInput("speed","Animation Speed",
+#                                              c("Slow"="slow",
+#                                                "Medium"="medium",
+#                                                "Fast"="fast"))
                           ),
                           column(9,
                                  plotOutput("cloudplot",width="700px",height="700px")

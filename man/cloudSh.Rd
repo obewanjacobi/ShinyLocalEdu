@@ -3,7 +3,7 @@
 \alias{cloudSh}
 \title{3-D Scatter Plots}
 \usage{
-cloudSh(x, data = parent.frame(),...)
+cloudSh(x, data = parent.frame(),adjust.anim=1...)
 }
 \arguments{
 \item{x}{Could be a formula.  If so, it should be of the form z~x*y|g1*g2, as in the
@@ -11,6 +11,12 @@ cloudSh(x, data = parent.frame(),...)
 
 \item{data}{data frame supplying variables for formula x.  If variables in x are not found in the data,
 then they will be searched for in the parent environment.}
+
+\item{adjust.anim}{Use this to adjust animation speed for oprtimum viewing.  The app measures
+elapsed time to plot the cloud, then attempts to determine a
+reasonable time interval between successive plots when animation is requested.
+The interval actually
+used is the intially-determined interval multiplied by this argument.}
 
 \item{...}{Other arguments passed to \code{cloud}.}
 }
