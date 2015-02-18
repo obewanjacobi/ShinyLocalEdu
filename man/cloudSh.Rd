@@ -3,7 +3,7 @@
 \alias{cloudSh}
 \title{3-D Scatter Plots}
 \usage{
-cloudSh(x, data = parent.frame(),group=NULL)
+cloudSh(x, data = parent.frame(),...)
 }
 \arguments{
 \item{x}{Could be a formula.  If so, it should be of the form z~x*y|g1*g2, as in the
@@ -12,7 +12,7 @@ cloudSh(x, data = parent.frame(),group=NULL)
 \item{data}{data frame supplying variables for formula x.  If variables in x are not found in the data,
 then they will be searched for in the parent environment.}
 
-\item{group}{A factor variable by which to groups the points of the plot.}
+\item{...}{Other arguments passed to \code{cloud}.}
 }
 \value{
 side effects
@@ -26,7 +26,7 @@ especially on the CentOS operating system.  For best views, open the app in the 
 }
 \examples{
 \dontrun{
-cloudSh(Sepal.Length~Petal.Length*Petal.Width,data=iris)
+cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,group=Species)
 }
 }
 \author{
