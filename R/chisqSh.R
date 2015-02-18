@@ -4,12 +4,13 @@
 #' Enter either formula-data input or a summary table.
 #'
 #' @rdname chisqSh
-#' @usage chisqSh(x, data = parent.frame(),p=NULL)
+#' @usage chisqSh(x, data = parent.frame(),p=NULL,options=NULL)
 #' @param x Could be a formula.  If so, it should be of the form ~var (for goodness of fit testing),
 #' or~var1+var2 (for association testing).  Otherwise it is either a table or matrix of summary data.
 #' @param data data frame supplying variables for formula x.  If variables in x are not found in the data,
 #' then they will be searched for in the parent environment.
 #' @param p Null probabilities in a goodness of fit test
+#' @param options passed to \code{shiny::runApp}.
 #' @return side effects
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
 #' especially on the CentOS operating system.  For best views, open the app in the browser.
@@ -36,7 +37,7 @@
 #' chisqSh(obs,p=rep(1/6,6))
 #' }
 chisqSh <-
-  function (x,data=parent.frame(),p=NULL)
+  function (x,data=parent.frame(),p=NULL,options=NULL)
   {
 
 ###########################################################
@@ -957,8 +958,7 @@ if (type=="goodness") {
   ui <- ui2
 }
 
-shiny::shinyApp(ui = ui, server = server)
-# as expected, setting options does not help increase screen width when package is attached
+shiny::shinyApp(ui = ui, server = server,options=options)
 
 
   }#end chisqSimShiny

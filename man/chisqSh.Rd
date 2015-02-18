@@ -3,7 +3,7 @@
 \alias{chisqSh}
 \title{Chi-Square Simulation (Contingency Table)}
 \usage{
-chisqSh(x, data = parent.frame(),p=NULL)
+chisqSh(x, data = parent.frame(),p=NULL,options=NULL)
 }
 \arguments{
 \item{x}{Could be a formula.  If so, it should be of the form ~var (for goodness of fit testing),
@@ -13,6 +13,8 @@ or~var1+var2 (for association testing).  Otherwise it is either a table or matri
 then they will be searched for in the parent environment.}
 
 \item{p}{Null probabilities in a goodness of fit test}
+
+\item{options}{passed to \code{shiny::runApp}.}
 }
 \value{
 side effects
