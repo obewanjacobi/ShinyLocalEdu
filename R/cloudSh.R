@@ -13,11 +13,13 @@
 #' @note This is a locally-run Shiny app.  It may not work properly on some R Studio Server set-ups,
 #' especially on the CentOS operating system.  For best views, open the app in the browser.
 #' @import shiny
+#' @importFrom lattice cloud
 #' @import shinythemes
 #' @export
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
+#' cloudSh(Sepal.Length~Petal.Length*Petal.Width,data=iris)
 #' }
 cloudSh <-
   function (x,data=parent.frame(),group=NULL)
