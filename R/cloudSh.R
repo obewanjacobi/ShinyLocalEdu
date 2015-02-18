@@ -24,31 +24,30 @@
 cloudSh <-
   function (x,data=parent.frame(),group=NULL)
   {
-  groupName <- as.character(substitute(group))
-  if (length(groupName) > 0) {
-    group <- simpleFind(varName=groupName,data=data)
-    haveGroup <- TRUE
-  } else haveGroup <- FALSE
+
+  ll <- as.list(match.call(expand.dots = FALSE)[-1])
+
+  haveGroup <- (length(as.character(substitute(group)))>0)
 
 # Define server logic for cloudSh app
 server <- shinyServer(function(input, output,session) {
 
   output$zControl <- renderUI({
-    speed <- 1000-input$speed
+    speed <- 1000-9.99*input$speed
     sliderInput("zScreen","z",0,360,value=0,step=1,
                 animate=animationOptions(interval=speed,loop=TRUE))
 
   })
 
   output$xControl <- renderUI({
-    speed <- 1000-input$speed
+    speed <- 1000-9.99*input$speed
     sliderInput("xScreen","x",0,360,value=90,step=1,
                 animate=animationOptions(interval=speed,loop=TRUE))
 
   })
 
   output$yControl <- renderUI({
-    speed <- 1000-input$speed
+    speed <- 1000-9.99*input$speed
     sliderInput("yScreen","y",0,360,value=40,step=1,
                 animate=animationOptions(interval=speed,loop=TRUE))
 
@@ -56,9 +55,9 @@ server <- shinyServer(function(input, output,session) {
 
   output$cloudplot <- renderPlot({
     if (!is.null(input$xScreen)) {
-      cloud(x,data=data,group=NULL,
+      cloud(eval(ll$x),data=eval(ll$data),group=eval(ll$group),
             screen=list(x=-input$xScreen,y=input$yScreen,z=input$zScreen),
-            auto.key=haveGroup)
+            auto.key=haveGroup,pch=19)
     }
   })
 
@@ -75,7 +74,7 @@ ui <- shinyUI(fluidPage(shinythemes::shinytheme("cerulean"),
   # Sidebar
   sidebarLayout(
     sidebarPanel(
-        numericInput("speed","Animation Speed",0,900,step=100,value=450),
+        sliderInput("speed","Animation Speed",1,100,step=.1,value=450),
         uiOutput("zControl"),
         uiOutput("xControl"),
         uiOutput("yControl")
