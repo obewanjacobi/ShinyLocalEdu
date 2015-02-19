@@ -35,7 +35,11 @@ especially on the CentOS operating system.  For best views, open the app in the 
 \examples{
 \dontrun{
 cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
-     group=Species,auto.key=TRUE)
+     group=Species,pch=19,auto.key=TRUE)
+# to embed in R Markdown:
+cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
+     group=Species,pch=19,auto.key=TRUE,
+     options=list(width="100\%",height=800))
 }
 }
 \author{
