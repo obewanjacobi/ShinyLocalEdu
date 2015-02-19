@@ -25,7 +25,11 @@
 #' @examples
 #' \dontrun{
 #' cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
-#'      group=Species,auto.key=TRUE)
+#'      group=Species,pch=19,auto.key=TRUE)
+#' # to embed in R Markdown:
+#' cloudSh(Petal.Length ~ Sepal.Length * Sepal.Width,data=iris,
+#'      group=Species,pch=19,auto.key=TRUE,
+#'      options=list(width="100%",height=800))
 #' }
 cloudSh <-
   function (x,data=parent.frame(),adjust.anim=1,options=NULL,...)
@@ -35,65 +39,14 @@ cloudSh <-
   argList$adjust.anim <- NULL
   argList$options <- NULL
 
-  plotTime <- system.time(do.call(cloud,argList))[3]
-  interval <- 10^5*plotTime*adjust.anim
+  plotTime <- system.time(do.call(cloud,argList))[3]+0.001
+  interval <- 0.7*10^5*plotTime*adjust.anim
 
 # Define server logic for cloudSh app
-  server1 <- shinyServer(function(input, output,session) {
-    #This option uses slider to set step on controls.  Not properly responsive yet.
+server <- shinyServer(function(input, output,session) {
 
-    step <- reactive({
-      10*input$speed
-    })
-
-    output$zControl <- renderUI({
-      step <- step()
-      print(step)
-      sliderInput("zScreen","z",0,360,value=0,step=step,
-                  animate=animationOptions(interval=100,loop=TRUE))
-
-    })
-
-    output$xControl <- renderUI({
-      step <- step()
-      sliderInput("xScreen","x",0,360,value=90,step=step,
-                  animate=animationOptions(interval=100,loop=TRUE))
-
-    })
-
-    output$yControl <- renderUI({
-      step <- step()
-      sliderInput("yScreen","y",0,360,value=40,step=step,
-                  animate=animationOptions(interval=100,loop=TRUE))
-
-    })
-
-    output$cloudplot <- renderPlot({
-      if (!is.null(input$xScreen)) {
-        allArgs <- c(list(screen=list(x=-input$xScreen,y=input$yScreen,z=input$zScreen)),
-                     argList)
-        do.call(cloud,allArgs)
-        #       cloud(eval(ll$x),data=eval(ll$data),group=eval(ll$group),
-        #             screen=list(x=-input$xScreen,y=input$yScreen,z=input$zScreen),
-        #             auto.key=haveGroup,pch=19)
-      }
-    })
-
-
-  })
-server2 <- shinyServer(function(input, output,session) {
-# This option permits three different step sizes.  Properly responsive.
-#   step <- reactive({
-#     switch(input$speed,
-#       "slow"=1,
-#       "medium"=10,
-#       "fast"=30
-#     )
-#   })
-
-  # This option allows works from the lsider.  I like it better.
   step <- reactive({
-    input$speed
+    as.numeric(input$speed)
   })
 
   output$zControl <- renderUI({
@@ -130,33 +83,7 @@ server2 <- shinyServer(function(input, output,session) {
 
 
 # Define ui for cloudSh app
-ui1 <- shinyUI(fluidPage(
-
-  #  Application title
-  titlePanel("3-D Scatter Plot"),
-
-  # Sidebar
-  sidebarLayout(
-    sidebarPanel(
-        sliderInput("speed","Animation Speed (degrees/sec)",0,360,step=10,value=90),
-        uiOutput("zControl"),
-        uiOutput("xControl"),
-        uiOutput("yControl")
-    ), #end sidebarPanel
-
-  # Here comes the main panel
-  mainPanel(
-    wellPanel(
-      plotOutput("cloudplot")
-    )
-
-  ) #end mainPanel
-
-  ) #end SidebarLayout
-
-))  #end fluidPage and and shinyUI
-
-ui2 <- shinyUI(fluidPage(
+ui <- shinyUI(fluidPage(
 
                         #  Application title
                         title="3-D Scatter Plot",
@@ -173,29 +100,20 @@ ui2 <- shinyUI(fluidPage(
                                           "For best results, animate only",
                                           "one direction at a time."),
                                  hr(),
-                                 sliderInput("speed","Animation Speed (degrees/step)",
-                                             0,90,value=1)
-#                                  selectInput("speed","Animation Speed",
-#                                              c("Slow"="slow",
-#                                                "Medium"="medium",
-#                                                "Fast"="fast"))
+                                selectInput("speed","Animation Speed",
+                                             c("1 degree"="1",
+                                               "10 degrees"="10",
+                                               "30 degrees"="30",
+                                               "45 degrees"="45"))
                           ),
                           column(9,
                                  plotOutput("cloudplot",width="700px",height="700px")
                                  )
                         )
 
-#                         hr(),
-#
-#                         fluidRow(
-#                           column(3,uiOutput("zControl")),
-#                           column(3,offset=1,uiOutput("xControl")),
-#                           column(3,offset=1,uiOutput("yControl"))
-#                         )
-
 ))  #end fluidPage and and shinyUI
 
-shiny::shinyApp(ui = ui2, server = server2,options=options)
+shiny::shinyApp(ui = ui, server = server,options=options)
 
 
   }#end cloudSh
