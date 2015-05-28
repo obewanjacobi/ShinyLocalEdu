@@ -2,6 +2,8 @@
 
 export(chisqSh)
 export(cloudSh)
+export(scatterDF)
+import(ggplot2)
 import(shiny)
 import(shinythemes)
 importFrom(lattice,cloud)
