@@ -23,7 +23,8 @@ especially on the CentOS operating system.
 }
 \examples{
 \dontrun{
-scatterDF(Petal.Length ~ Petal.Width | Species, data = iris)
+scatterDF(Sepal.Length~Sepal.Width|Species,data=iris)
+if (require(ggplot2)) scatterDF(price ~ carat | clarity, data = diamonds)
 if (require(mosaicData)) scatterDF(sat ~ salary | frac, data = SAT)
 }
 }
