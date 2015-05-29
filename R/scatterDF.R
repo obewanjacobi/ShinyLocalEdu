@@ -15,7 +15,8 @@
 #' @author Homer White \email{hwhite0@@georgetowncollege.edu}
 #' @examples
 #' \dontrun{
-#' scatterDF(Petal.Length ~ Petal.Width | Species, data = iris)
+#' scatterDF(Sepal.Length~Sepal.Width|Species,data=iris)
+#' if (require(ggplot2)) scatterDF(price ~ carat | clarity, data = diamonds)
 #' if (require(mosaicData)) scatterDF(sat ~ salary | frac, data = SAT)
 #' }
 
@@ -80,7 +81,7 @@ scatterDF <-   function (form,data=parent.frame()) {
             selectInput(
               inputId="smoother",
               label="Smoothing Method",
-              choices=c("line"="lm","loess curve"="loess","gam curve"="gam","none"="none"),
+              choices=c("line"="lm","loess/gam curve"="auto","none"="none"),
               selected="lm")
 
             ),
@@ -100,16 +101,19 @@ scatterDF <-   function (form,data=parent.frame()) {
 
    fluidRow(
      column(3,
+
             selectInput(
               inputId="level",
               label=paste("Value of",zname),
-              choices=levels(z)
-              ),
+              choices=levels(z)),
+
             selectInput(
               inputId="smoother",
               label="Smoothing Method",
-              choices=c("line"="lm","loess curve"="loess","gam curve"="gam","none"="none"),
-              selected="lm")
+              choices=c("line"="lm","loess/gam curve"="auto","none"="none"),
+              selected="lm"),
+
+            checkboxInput("animate","Animate",value=FALSE)
 
      ),
 
@@ -148,7 +152,7 @@ scatterDF <-   function (form,data=parent.frame()) {
      if (input$smoother != "none") {
 
       ggplot(df,aes(x=x,y=y)) + geom_point(aes(colour=selected,size=selected,fill=selected)) +
-        geom_smooth(method="lm",se=FALSE,colour=otherColour) +
+        geom_smooth(method=input$smoother,se=FALSE,colour=otherColour) +
         scale_fill_manual(values=myColours) +
         scale_colour_manual(values=myColours) +
         scale_size_manual(values=c(2,3)) +
@@ -175,16 +179,33 @@ scatterDF <-   function (form,data=parent.frame()) {
 
  server.factor <- shinyServer(function(input, output,session) {
 
+    n <- 1
+
+    observe({
+
+      if (input$animate) {
+        updateSelectInput(session,inputId="level",selected=levels(z)[n])
+      }
+
+    })
+
    make_plot <- reactive({
+
     desiredLevel <- input$level
     subFrame <- subset(df,z == desiredLevel)
     selected  <- ifelse(z == desiredLevel,"selected","other")
     df$selected <- factor(selected)
 
+    if (input$animate) {
+      n <<- n+1
+      if (n > length(levels(z))) n <<- 1
+      updateSelectInput(session,inputId="level",selected=levels(z)[n])
+    }
+
     if (input$smoother != "none") {
 
       ggplot(df,aes(x=x,y=y)) + geom_point(aes(colour=selected,size=selected,fill=selected)) +
-        geom_smooth(method="lm",se=FALSE,colour=otherColour) +
+        geom_smooth(method=input$smoother,se=FALSE,colour=otherColour) +
         scale_fill_manual(values=myColours) +
         scale_colour_manual(values=myColours) +
         scale_size_manual(values=c(2,3)) +
@@ -198,6 +219,7 @@ scatterDF <-   function (form,data=parent.frame()) {
         scale_colour_manual(values=myColours) +
         scale_size_manual(values=c(2,3)) +
         labs(x=xname,y=yname)
+
     }
 
     }) # end make_plot
